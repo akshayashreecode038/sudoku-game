@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sudoku – DSA Mini Project</title>
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#f6f5f1;--card:#ffffff;--text:#1f2328;--muted:#6b7280;
+  --line:#d3d6db;--line-strong:#2b2f36;--accent:#2563eb;--accent-soft:#dbe7ff;
+  --peer:#eef1f6;--same:#c7d8fb;--given:#1f2328;--user:#2563eb;
+  --bad:#dc2626;--bad-soft:#fde2e2;--good:#15803d;--btn:#eceef2;--btn-hover:#e0e3e9;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#15171a;--card:#1e2126;--text:#e8eaed;--muted:#9aa1ab;
+    --line:#3a3f47;--line-strong:#c9ced6;--accent:#6ea0ff;--accent-soft:#25324f;
+    --peer:#272b32;--same:#31446e;--given:#e8eaed;--user:#7fb0ff;
+    --bad:#ff7b7b;--bad-soft:#4a2326;--good:#5bd48a;--btn:#2a2e35;--btn-hover:#343942;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15171a;--card:#1e2126;--text:#e8eaed;--muted:#9aa1ab;
+  --line:#3a3f47;--line-strong:#c9ced6;--accent:#6ea0ff;--accent-soft:#25324f;
+  --peer:#272b32;--same:#31446e;--given:#e8eaed;--user:#7fb0ff;
+  --bad:#ff7b7b;--bad-soft:#4a2326;--good:#5bd48a;--btn:#2a2e35;--btn-hover:#343942;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  display:flex;justify-content:center;padding:16px}
+.app{width:100%;max-width:460px}
+h1{font-size:22px;margin:4px 0 2px}
+.sub{color:var(--muted);font-size:13px;margin:0 0 12px}
+.bar{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap}
+.stats{display:flex;gap:14px;font-size:14px;color:var(--muted)}
+.stats b{color:var(--text);font-variant-numeric:tabular-nums}
+select,button{font:inherit;color:var(--text)}
+select{background:var(--btn);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+.board{display:grid;grid-template-columns:repeat(9,1fr);aspect-ratio:1/1;
+  border:2px solid var(--line-strong);background:var(--card);border-radius:4px;overflow:hidden}
+.cell{border:0;border-right:1px solid var(--line);border-bottom:1px solid var(--line);
+  background:var(--card);font-size:clamp(18px,6vw,28px);padding:0;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;color:var(--user);font-weight:500}
+.cell.br{border-right:2px solid var(--line-strong)}
+.cell.bb{border-bottom:2px solid var(--line-strong)}
+.cell:nth-child(9n){border-right:0}
+.cell:nth-child(n+73){border-bottom:0}
+.cell.given{color:var(--given);font-weight:700}
+.cell.peer{background:var(--peer)}
+.cell.same{background:var(--same)}
+.cell.sel{background:var(--accent-soft);outline:2px solid var(--accent);outline-offset:-2px;z-index:1}
+.cell.wrong{background:var(--bad-soft);color:var(--bad)}
+.cell.shake{animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+.msg{min-height:22px;margin:10px 2px 6px;font-size:14px;color:var(--muted)}
+.msg.bad{color:var(--bad)}.msg.good{color:var(--good);font-weight:600}
+.pad{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:8px}
+.pad button,.actions button{background:var(--btn);border:1px solid var(--line);border-radius:10px;
+  padding:11px 0;font-size:18px;cursor:pointer}
+.pad button:hover,.actions button:hover{background:var(--btn-hover)}
+.actions{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.actions button{font-size:14px;padding:10px 0}
+.actions .primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.dsa{margin-top:14px;background:var(--card);border:1px solid var(--line);border-radius:10px;
+  padding:10px 12px;font-size:13px;color:var(--muted)}
+.dsa b{color:var(--text)}
+.stack{display:flex;gap:3px;margin-top:6px;flex-wrap:wrap;min-height:22px}
+.stack span{background:var(--accent-soft);color:var(--text);border-radius:4px;padding:1px 6px;font-size:12px}
+.over .cell{cursor:default}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <h1>Sudoku</h1>
+  <p class="sub">DSA mini project: 2D arrays, recursion, backtracking, stack</p>
+
+  <div class="bar">
+    <select id="diff" aria-label="Difficulty">
+      <option value="36">Easy</option>
+      <option value="46" selected>Medium</option>
+      <option value="52">Hard</option>
+    </select>
+    <div class="stats">
+      <span>Time <b id="time">00:00</b></span>
+      <span>Mistakes <b id="mist">0</b></span>
+    </div>
+    <button class="actions-new" id="newBtn" style="background:var(--accent);color:#fff;border:0;border-radius:8px;padding:7px 12px;cursor:pointer">New game</button>
+  </div>
+
+  <div class="board" id="board" role="grid" aria-label="Sudoku board"></div>
+  <div class="msg" id="msg" aria-live="polite"></div>
+
+  <div class="pad" id="pad"></div>
+  <div class="actions">
+    <button id="undoBtn">↶ Undo</button>
+    <button id="hintBtn">💡 Hint</button>
+    <button id="checkBtn">✓ Check</button>
+    <button id="solveBtn">Solve</button>
+  </div>
+
+  <div class="dsa">
+    <div><b>Undo stack</b> (top is the right-most): <b id="depth">0</b> moves</div>
+    <div class="stack" id="stackView"></div>
+    <div id="solverInfo" style="margin-top:6px"></div>
+  </div>
+</div>
+
+<script>
+/* ===== Sudoku: DSA mini project =====
+   2D arrays  : board, given, solution (9x9)
+   Searching  : findEmpty() traverses the board
+   Recursion  : solve() and countSolutions() call themselves
+   Backtracking: set a number, recurse, reset to 0 on failure
+   Stack      : undoStack (push on move, pop on undo)               */
+
+const N = 9;
+let board, given, solution;
+let undoStack = [];
+let sel = null, seconds = 0, timer = null, mistakes = 0, over = false, calls = 0;
+
+/* ---- core algorithms ---- */
+function isValid(g, r, c, n) {
+  for (let i = 0; i < N; i++) {
+    if (g[r][i] === n && i !== c) return false;     // row
+    if (g[i][c] === n && i !== r) return false;     // column
+  }
+  const br = r - r % 3, bc = c - c % 3;             // 3x3 box
+  for (let i = 0; i < 3; i++)
+    for (let j = 0; j < 3; j++)
+      if (g[br + i][bc + j] === n && !(br + i === r && bc + j === c)) return false;
+  return true;
+}
+
+function findEmpty(g) {
+  for (let r = 0; r < N; r++)
+    for (let c = 0; c < N; c++)
+      if (g[r][c] === 0) return [r, c];
+  return null;
+}
+
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function solve(g, randomize = false) {
+  calls++;
+  const e = findEmpty(g);
+  if (!e) return true;                               // base case: board full
+  const [r, c] = e;
+  const nums = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+  if (randomize) shuffle(nums);
+  for (const n of nums) {
+    if (isValid(g, r, c, n)) {
+      g[r][c] = n;                                   // choose
+      if (solve(g, randomize)) return true;          // recurse
+      g[r][c] = 0;                                   // backtrack
+    }
+  }
+  return false;
+}
+
+function countSolutions(g, limit = 2) {
+  const e = findEmpty(g);
+  if (!e) return 1;
+  const [r, c] = e;
+  let count = 0;
+  for (let n = 1; n <= 9 && count < limit; n++) {
+    if (isValid(g, r, c, n)) {
+      g[r][c] = n;
+      count += countSolutions(g, limit - count);
+      g[r][c] = 0;
+    }
+  }
+  return count;
+}
+
+const clone = g => g.map(row => row.slice());
+const blank = () => Array.from({ length: N }, () => Array(N).fill(0));
+
+function generate(removeTarget) {
+  const full = blank();
+  solve(full, true);                                 // random complete grid
+  const puzzle = clone(full);
+  let removed = 0;
+  for (const idx of shuffle([...Array(81).keys()])) {
+    if (removed >= removeTarget) break;
+    const r = Math.floor(idx / 9), c = idx % 9, keep = puzzle[r][c];
+    puzzle[r][c] = 0;
+    if (countSolutions(clone(puzzle)) !== 1) puzzle[r][c] = keep;  // must stay unique
+    else removed++;
+  }
+  return { puzzle, full };
+}
+
+/* ---- UI ---- */
+const $ = id => document.getElementById(id);
+const boardEl = $('board');
+const cells = [];
+
+for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+  const b = document.createElement('button');
+  b.className = 'cell' + (c % 3 === 2 && c < 8 ? ' br' : '') + (r % 3 === 2 && r < 8 ? ' bb' : '');
+  b.setAttribute('role', 'gridcell');
+  b.addEventListener('click', () => { if (!over) { sel = [r, c]; render(); } });
+  boardEl.appendChild(b); cells.push(b);
+}
+const padEl = $('pad');
+for (let n = 1; n <= 9; n++) {
+  const b = document.createElement('button'); b.textContent = n;
+  b.addEventListener('click', () => enter(n)); padEl.appendChild(b);
+}
+const eb = document.createElement('button'); eb.textContent = '⌫'; eb.title = 'Erase';
+eb.addEventListener('click', () => enter(0)); padEl.appendChild(eb);
+
+function say(text, cls = '') { const m = $('msg'); m.textContent = text; m.className = 'msg ' + cls; }
+const fmt = s => String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+
+function render(wrongSet) {
+  const sv = sel ? board[sel[0]][sel[1]] : 0;
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+    const el = cells[r * 9 + c], v = board[r][c];
+    el.textContent = v || '';
+    let cls = el.className.replace(/\b(given|peer|same|sel|wrong|shake)\b/g, '').trim();
+    if (given[r][c]) cls += ' given';
+    if (sel) {
+      const [sr, sc] = sel;
+      if (r === sr && c === sc) cls += ' sel';
+      else if (v && v === sv) cls += ' same';
+      else if (r === sr || c === sc || (r - r % 3 === sr - sr % 3 && c - c % 3 === sc - sc % 3)) cls += ' peer';
+    }
+    if (wrongSet && wrongSet.has(r * 9 + c)) cls += ' wrong';
+    el.className = cls;
+  }
+  $('mist').textContent = mistakes;
+  $('depth').textContent = undoStack.length;
+  $('stackView').innerHTML = undoStack.slice(-12)
+    .map(m => `<span>(${m.r + 1},${m.c + 1})</span>`).join('');
+  $('app').classList.toggle('over', over);
+}
+
+function enter(n) {
+  if (over) return;
+  if (!sel) return say('Select a cell first.');
+  const [r, c] = sel;
+  if (given[r][c]) return say('That cell is part of the original puzzle.', 'bad');
+  if (board[r][c] === n) return;
+  if (n !== 0 && !isValid(board, r, c, n)) {
+    mistakes++; render();
+    cells[r * 9 + c].classList.add('shake');
+    return say(`${n} already appears in that row, column or 3×3 box.`, 'bad');
+  }
+  undoStack.push({ r, c, old: board[r][c] });        // STACK: push
+  board[r][c] = n;
+  say(n ? '' : 'Cell erased.');
+  afterMove();
+}
+
+function afterMove() {
+  render();
+  if (!findEmpty(board)) {                           // full + every move validated = solved
+    over = true; clearInterval(timer);
+    render();
+    say(`🎉 Solved in ${fmt(seconds)} with ${mistakes} mistake${mistakes === 1 ? '' : 's'}!`, 'good');
+  }
+}
+
+function undo() {
+  if (over) return;
+  if (!undoStack.length) return say('Nothing to undo.');
+  const m = undoStack.pop();                         // STACK: pop
+  board[m.r][m.c] = m.old; sel = [m.r, m.c];
+  say(`Undid move at row ${m.r + 1}, column ${m.c + 1}.`);
+  render();
+}
+
+function hint() {
+  if (over) return;
+  let target = null;
+  if (sel && board[sel[0]][sel[1]] === 0) target = sel;
+  else target = findEmpty(board);
+  if (!target) return;
+  const [r, c] = target; sel = [r, c];
+  const n = solution[r][c];
+  if (!isValid(board, r, c, n)) {
+    return say('Some of your earlier numbers conflict with the solution. Try Check.', 'bad');
+  }
+  undoStack.push({ r, c, old: board[r][c] });
+  board[r][c] = n;
+  say(`Hint: ${n} goes at row ${r + 1}, column ${c + 1}.`);
+  afterMove();
+}
+
+function check() {
+  if (over) return;
+  const wrong = new Set();
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++)
+    if (board[r][c] && board[r][c] !== solution[r][c]) wrong.add(r * 9 + c);
+  render(wrong);
+  say(wrong.size ? `${wrong.size} cell${wrong.size > 1 ? 's differ' : ' differs'} from the solution (red).`
+                 : 'All numbers so far are correct!', wrong.size ? 'bad' : 'good');
+}
+
+function solveNow() {
+  if (over) return;
+  const g = clone(given.map((row, r) => row.map((g2, c) => g2 ? board[r][c] : 0)));
+  calls = 0;
+  const t0 = performance.now();
+  solve(g);                                          // recursion + backtracking
+  const ms = (performance.now() - t0).toFixed(1);
+  board = g; undoStack = []; over = true; clearInterval(timer);
+  $('solverInfo').innerHTML = `Solver: <b>${calls}</b> recursive calls in <b>${ms} ms</b>`;
+  say('Solved by the backtracking solver.', 'good');
+  render();
+}
+
+function newGame() {
+  const { puzzle, full } = generate(+$('diff').value);
+  board = clone(puzzle); solution = full;
+  given = puzzle.map(row => row.map(v => v !== 0));
+  undoStack = []; sel = null; mistakes = 0; over = false; seconds = 0;
+  $('solverInfo').textContent = '';
+  $('time').textContent = '00:00';
+  clearInterval(timer);
+  timer = setInterval(() => { seconds++; $('time').textContent = fmt(seconds); }, 1000);
+  say('New puzzle ready. Select a cell and enter a number.');
+  render();
+}
+
+$('newBtn').onclick = newGame;
+$('undoBtn').onclick = undo;
+$('hintBtn').onclick = hint;
+$('checkBtn').onclick = check;
+$('solveBtn').onclick = solveNow;
+
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'SELECT') return;
+  if (e.key >= '1' && e.key <= '9') enter(+e.key);
+  else if (e.key === '0' || e.key === 'Backspace' || e.key === 'Delete') enter(0);
+  else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); }
+  else if (e.key.startsWith('Arrow') && sel && !over) {
+    e.preventDefault();
+    const d = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] }[e.key];
+    sel = [(sel[0] + d[0] + 9) % 9, (sel[1] + d[1] + 9) % 9]; render();
+  }
+});
+
+newGame();
+</script>
+</body>
+</html>
