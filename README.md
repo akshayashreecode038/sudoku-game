@@ -116,6 +116,12 @@ Key learning outcomes include:
 - Applying searching and validation techniques.
 - Developing interactive applications using programming fundamentals.
 
+## Screenshots 
+<img width="748" height="387" alt="Screenshot 2026-11-23 143713" src="https://github.com/user-attachments/assets/7078152f-f113-4432-ad56-7558af724b74" />
+<img width="648" height="1042" alt="Screenshot 2026-11-23 143729" src="https://github.com/user-attachments/assets/4dcc48fb-bc78-4d6b-bab9-a62bdb1e1525" />
+<img width="710" height="992" alt="Screenshot 2026-11-23 143757" src="https://github.com/user-attachments/assets/1d2dd0ca-222e-4486-bf50-53243bc640df" />
+
+
 ## 🚀 Future Enhancements
 
 - Additional Sudoku difficulty levels.
